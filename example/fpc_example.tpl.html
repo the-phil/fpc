@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+<head>
+	<title>
+		Form Test
+	</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta http-equiv="Content-Style-Type" content="text/css" />
+
+	<style type="text/css" media="screen">
+		body {
+			color: #000;
+			margin: 0px;
+			padding: 0px;
+			font-size: 11px;
+			font-family: verdana, arial, helvetica, sans-serif;
+			text-align:left;
+			}
+		input, textarea {
+			border:1px solid #333;
+		}
+		input:focus, textarea:focus {
+			border:1px solid #036;
+			background-color:#ff9;
+		}
+	</style>
+</head>
+
+<body>
+<!-- Form here -->
+<form action="[frmAction]" enctype="multipart/form-data" method="post" name="myform">
+<!-- form method="post" action="/contact/" -->
+<div style="width:400px; border:1px #333 solid; padding:30px;">
+[errorMsg]
+<br />
+
+Text Field 1 (required) :<br />
+<input name="text1" type="text" size="40" value="" style="vertical-align:middle;" />(<span style="color:#c00;">*</span>)<br />
+<br />
+Text Field 2 :<br />
+<input name="text2" type="text" size="40" value="this text is not required" /><br />
+<br />
+
+Name :<br />
+<input name="name" type="text" size="40" value="" /><br />
+
+Text Area 1 :<br />
+<textarea name="textarea" type="textarea" cols="35" rows="9"></textarea><br />
+
+Text Area 2 :<br />
+<textarea name="textarea2" type="textarea" cols="35" rows="9">This is the second text area</textarea><br />
+
+Select Box 1 :<br />
+<select onchange="alertselected(this);alertType();" name="select" required="1">
+	<option value="option1value">Option 1</option>
+	<option value="option2value">Option 2</option>
+	<option value="option3value" selected>Option 3</option>
+	<option value="option4value">Option 4</option>
+</select><br />
+
+Check Box 1 : <input name="checkbox1" style="vertical-align:middle;padding-right:5px;" type="checkbox" value="checkbox1" checked /><br />
+Check Box 2 : <input name="checkbox2" style="vertical-align:middle;padding-right:5px;" type="checkbox" value="checkbox2" /><br />
+
+<input style="vertical-align:middle;padding-right:5px;" type="radio" name="group1" value="grp1_1" checked /> grp1_1<br />
+<input style="vertical-align:middle;padding-right:5px;" type="radio" name="group1" value="grp1_2" /> grp1_2<br />
+<input style="vertical-align:middle;padding-right:5px;" type="radio" name="group1" value="grp1_3" /> grp1_3<br />
+Enter text from security image :<br />
+<div style="display:block;">
+	<div style="float:left; padding-right:5px;">
+		<img src="./captcha/CaptchaSecurityImages.php?width=160&height=25" style="height:25px; width:160px;" /><br />
+		Reset Security Image <input name="captcha_check_box" style="vertical-align:middle;padding-right:5px;" type="checkbox" value="1" /><br />
+	</div>
+	<input name="captcha" type="text" size="20" value="" style="vertical-align:middle;" />(<span style="color:#c00;">*</span>)<br />
+</div>
+<br /><br /><br /><br />
+<!--
+<input name="edit" type="hidden" value="0" />
+<input name="id" type="hidden" value="" />
+<input name="submitted" type="hidden" value="1" />
+-->
+<input name="submit" type="submit" value="submit" />
+</div>
+</form>
+
+<!-- End Form Here -->
