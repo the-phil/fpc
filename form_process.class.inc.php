@@ -1,75 +1,79 @@
 <?php
-########################################################################
-# File Name : form_process.class.inc.php                               #
-# Author(s) :                                                          #
-#   Phil Allen - phil@hilands.com                                      #
-# Last Edited By :                                                     #
-#   phil@hilands.com                                                   #
-# Version : 2009102700                                                 #
-#                                                                      #
-# Copyright :                                                          #
-#   Database Include                                                   #
-#   Copyright (C) 2005 Philip J Allen                                  #
-#                                                                      #
-#   This file is free software; you can redistribute it and/or modify  #
-#   it under the terms of the GNU General Public License as published  #
-#   by the Free Software Foundation; either version 2 of the License,  #
-#   or (at your option) any later version.                             #
-#                                                                      #
-#   This File is distributed in the hope that it will be useful,       #
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of     #
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      #
-#   GNU General Public License for more details.                       #
-#                                                                      #
-#   You should have received a copy of the GNU General Public License  #
-#   along with This File; if not, write to the Free Software           #
-#   Foundation, Inc., 51 Franklin St, Fifth Floor,                     #
-#   Boston, MA  02110-1301  USA                                        #
-#                                                                      #
-# External Files:                                                      #
-#   List of External Files all require/includes                        #
-#                                                                      #
-# General Information (algorithm) :                                    #
-#                                                                      #
-# Functions :                                                          #
-#   see classes                                                        #
-#                                                                      #
-# Classes :                                                            #
-#   tpl                                                                #
-#                                                                      #
-# CSS :                                                                #
-#   db_error - used in span for custom database errors                 #
-#   db_sql_error_message - used in span for SQL default error          #
-#       messages and error numbers                                     #
-#                                                                      #
-# JavaScript :                                                         #
-#                                                                      #
-# Change Log :                                                         #
-#                                                                      #
-# Variable Lexicon :                                                   #
-#   String             - $strStringName                                #
-#   Array              - $arrArrayName                                 #
-#   Resource           - $resResourceName                              #
-#   Reference Variable - $refReferenceVariableName  (aka object)       #
-#   Integer            - $intIntegerName                               #
-#   Boolean            - $boolBooleanName                              #
-#   Function           - function_name (all lowercase _ as space)      #
-#   Class              - class_name (all lowercase _ as space)         #
-#                                                                      #
-# Commenting Style :                                                   #
-#   # (in boxes) denotes commenting for large blocks of code, function #
-#       and classes                                                    #
-#   # (single at beginning of line) denotes debugging infromation      #
-#       like printing out array data to see if data has properly been  #
-#       entered                                                        #
-#   # (single indented) denotes commented code that may later serve    #
-#       some type of purpose                                           #
-#   // used for simple notes inside of code for easy follow capability #
-#   /* */ is only used to comment out mass lines of code, if we follow #
-#       the above way of code we will be able to comment out entire    #
-#       files for major debugging                                      #
-#                                                                      #
-########################################################################
+################################################################################
+# File Name : form_process.class.inc.php                                       #
+# Author(s) :                                                                  #
+#   Phil Allen - phil@hilands.com                                              #
+# Last Edited By :                                                             #
+#   phil@hilands.com                                                           #
+# Version : 2011052500                                                         #
+#                                                                              #
+# Copyright :                                                                  #
+#   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011 Philip Allen            #
+#                                                                              #
+#   This file is free software; you can redistribute it and/or modify          #
+#   it under the terms of the GNU General Public License as published          #
+#   by the Free Software Foundation; either version 2 of the License,          #
+#   or (at your option) any later version.                                     #
+#                                                                              #
+#   This File is distributed in the hope that it will be useful,               #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of             #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              #
+#   GNU General Public License for more details.                               #
+#                                                                              #
+#   You should have received a copy of the GNU General Public License          #
+#   along with This File; if not, write to the Free Software                   #
+#   Foundation, Inc., 51 Franklin St, Fifth Floor,                             #
+#   Boston, MA  02110-1301  USA                                                #
+#                                                                              #
+# External Files:                                                              #
+#   List of External Files all require/includes                                #
+#                                                                              #
+# General Information (algorithm) :                                            #
+#                                                                              #
+# Functions :                                                                  #
+#   see classes                                                                #
+#                                                                              #
+# Classes :                                                                    #
+#   tpl                                                                        #
+#                                                                              #
+# CSS :                                                                        #
+#   db_error - used in span for custom database errors                         #
+#   db_sql_error_message - used in span for SQL default error                  #
+#       messages and error numbers                                             #
+#                                                                              #
+# JavaScript :                                                                 #
+#                                                                              #
+# Change Log :                                                                 #
+#   Got rid of the "remove slashes" it was redundant and caused errors         #
+#   All db security should be done outside of this class                       #
+#   20110522 changed PHP_SELF to REQUEST_URI for [frmAction]                   #
+#      this allows ?input follow throughs                                      #
+#      changed referer to remove ?input variable. for valid referers           #
+#                                                                              #
+# Variable Lexicon :                                                           #
+#   String             - $strStringName                                        #
+#   Array              - $arrArrayName                                         #
+#   Resource           - $resResourceName                                      #
+#   Reference Variable - $refReferenceVariableName  (aka object)               #
+#   Integer            - $intIntegerName                                       #
+#   Boolean            - $boolBooleanName                                      #
+#   Function           - function_name (all lowercase _ as space)              #
+#   Class              - class_name (all lowercase _ as space)                 #
+#                                                                              #
+# Commenting Style :                                                           #
+#   # (in boxes) denotes commenting for large blocks of code, function         #
+#       and classes                                                            #
+#   # (single at beginning of line) denotes debugging infromation              #
+#       like printing out array data to see if data has properly been          #
+#       entered                                                                #
+#   # (single indented) denotes commented code that may later serve            #
+#       some type of purpose                                                   #
+#   // used for simple notes inside of code for easy follow capability         #
+#   /* */ is only used to comment out mass lines of code, if we follow         #
+#       the above way of code we will be able to comment out entire            #
+#       files for major debugging                                              #
+#                                                                              #
+################################################################################
 /*
 How to handle editing.
 Shall we use arrREQUEST to take input on all posted data. Do we do a data set
@@ -117,10 +121,18 @@ class form_process
 	function setArrRequest($arrData=array())
 	{
 		$this->arrRequest = $arrData;
-		if (get_magic_quotes_gpc())
-			$this->arrRequest = $this->arrstripslashes($this->arrRequest);
-			$this->arrRequest = $this->arrHTMLEntities($this->arrRequest);
-			$this->arrRequest = $this->arrConvertSmartQuotes($this->arrRequest);
+		#echo "setArrRequest 1 :<hr /><pre>"; print_r($this->arrRequest); echo "</pre><hr />";
+		#echo "Magic Quotes GPC: ".get_magic_quotes_gpc()."<br />\n";
+		#echo "Magic Quotes runtime: ".get_magic_quotes_runtime()."<br />\n";
+		//if (get_magic_quotes_gpc())
+		#if(get_magic_quotes_runtime())
+		#{
+		#	echo "inside quotes<br />\n";
+		#	$this->arrRequest = $this->arrstripslashes($this->arrRequest);
+		#}
+		#echo "setArrRequest :<pre>"; print_r($this->arrRequest); echo "</pre>";
+		$this->arrRequest = $this->arrHTMLEntities($this->arrRequest);
+		$this->arrRequest = $this->arrConvertSmartQuotes($this->arrRequest);
 	}
 	################################################################################
 	# processPost                                                                  #
@@ -251,7 +263,8 @@ class form_process
 			fclose($fileHandle);
 			if(preg_match("[frmAction]", $this->strTemplate))
 			{
-				$this->strTemplate = str_replace("[frmAction]", $_SERVER['PHP_SELF'], $this->strTemplate);
+				$this->strTemplate = str_replace("[frmAction]", $_SERVER['REQUEST_URI'], $this->strTemplate);
+				#$this->strTemplate = str_replace("[frmAction]", $_SERVER['PHP_SELF'], $this->strTemplate);
 			}
 			$this->strTemplateOrig = $this->strTemplate;
 			// orig will be used as non parsed all we'll do is remove the [errorMsg]
@@ -578,9 +591,12 @@ class form_process
 					// set arrfields values
 					#echo $arrFields[$strKey][$arrValue]['value']."<br />\n"; //oops extra var
 					#echo $arrFields[$strKey]['value']."<br />\n";
-					$this->arrFields[$strKey]['nvalue'] = $this->arrRequest[$arrValue['name']]; // need check if array_key_exists
-					$this->arrFields[$strKey]['nform'] = str_replace('value="'.$this->arrFields[$strKey]['value'].'"','value="'.$this->arrFields[$strKey]['nvalue'].'"', $this->arrFields[$strKey]['form']);
-					$this->strTemplate = str_replace($this->arrFields[$strKey]['form'], $this->arrFields[$strKey]['nform'], $this->strTemplate);
+					if (array_key_exists($arrValue['name'], $this->arrRequest))
+					{
+						$this->arrFields[$strKey]['nvalue'] = $this->arrRequest[$arrValue['name']]; // need check if array_key_exists
+						$this->arrFields[$strKey]['nform'] = str_replace('value="'.$this->arrFields[$strKey]['value'].'"','value="'.$this->arrFields[$strKey]['nvalue'].'"', $this->arrFields[$strKey]['form']);
+						$this->strTemplate = str_replace($this->arrFields[$strKey]['form'], $this->arrFields[$strKey]['nform'], $this->strTemplate);
+					}
 					break;
 				################################################################
 				#                                                              #
@@ -602,7 +618,12 @@ class form_process
 					if (isset($this->arrRequest[$arrValue['name']]) && $this->arrRequest[$arrValue['name']] != "0" && $this->arrRequest[$arrValue['name']] != null)
 					{
 						// add "checked" if it was.
-						$this->arrFields[$strKey]['nform'] = str_replace("/>", "checked />", $this->arrFields[$strKey]['nform']);
+							// need to add something in here for just plain end > instead of end />
+						#preg_match($this->arrFields[$strKey]['nform']
+						if ("/>" == substr($this->arrFields[$strKey]['nform'], -2))
+							$this->arrFields[$strKey]['nform'] = str_replace("/>", "checked />", $this->arrFields[$strKey]['nform']);
+						else
+							$this->arrFields[$strKey]['nform'] = str_replace(">", "checked>", $this->arrFields[$strKey]['nform']);
 					}
 					$this->strTemplate = str_replace($this->arrFields[$strKey]['form'], $this->arrFields[$strKey]['nform'], $this->strTemplate);
 					break;
@@ -619,7 +640,11 @@ class form_process
 						if ($this->arrRequest[$arrValue['name']] == $arrValue['value'])
 						{
 							// add "checked" if it was.
-							$this->arrFields[$strKey]['nform'] = str_replace("/>", "checked />", $this->arrFields[$strKey]['nform']);
+							// need to add something in here for just plain end > instead of end />
+							if ("/>" == substr($this->arrFields[$strKey]['nform'], -2))
+								$this->arrFields[$strKey]['nform'] = str_replace("/>", "checked />", $this->arrFields[$strKey]['nform']);
+							else
+								$this->arrFields[$strKey]['nform'] = str_replace(">", "checked>", $this->arrFields[$strKey]['nform']);
 						}
 					}
 					$this->strTemplate = str_replace($this->arrFields[$strKey]['form'], $this->arrFields[$strKey]['nform'], $this->strTemplate);
@@ -690,6 +715,11 @@ class form_process
 		{
 			foreach ($this->arrFormConf['validation'] as $strKey => $arrValue)
 			{
+				if ($strKey == 'match')
+				{
+					#$this->checkMatch($_REQUEST[$arrValue[0]], $_REQUEST[$arrValue[1]]);
+					$this->checkMatch($arrValue);
+				}
 				#echo "Key : ".$strKey."<br />\n";
 				#echo "<pre>"; print_r($arrValue); echo "</pre><br />\n";
 				foreach ($arrValue as $strValue)
@@ -720,10 +750,18 @@ class form_process
 	############################################################################
 	function checkRequired($strName, $strValue)
 	{
+		#echo "strName : ".$strName."<br />\n";
+		#echo "strValue : ".$strValue."<br />\n";
 		if ($strValue == null || $strValue == "")
 		{
+			//create error message, see if fieldError array exists for "our" fields.
+			if (array_key_exists($strName, $this->arrFormConf['fieldError']))
+				$strField = $this->arrFormConf['fieldError'][$strName];
+			else
+				$strField = $strName;
 			$this->boolError = true;
-			$this->strErrorMsg .= str_replace("[field]", $strName, $this->arrFormConf['errorMsg']['required'])."<br />\n";
+			$this->strErrorMsg .= str_replace("[field]", $strField, $this->arrFormConf['errorMsg']['required'])."<br />\n";
+			#$this->strErrorMsg .= str_replace("[field]", $strName, $this->arrFormConf['errorMsg']['required'])."<br />\n";
 			// check fieldText should see if it exists ...
 			if (array_key_exists($strName, $this->arrFormConf['fieldText']))
 			{
@@ -782,10 +820,28 @@ class form_process
 		if (array_key_exists('validReferer', $this->arrFormConf))
 		{
 			$boolValid = false;
+			//need to strip ? and passed. from referer.
+			$strReferer = substr ($_SERVER['HTTP_REFERER'], 0, strpos($_SERVER['HTTP_REFERER'], '?', 1));
+			if ($strReferer == "")
+				$strReferer = $_SERVER['HTTP_REFERER'];
+			// run loop for each "valid referer" from Configuration array.
 			foreach ($this->arrFormConf['validReferer'] as $strValidReferer)
 			{
+				// check if referer is [PHP_SELF] block if it is replace PHP_SELF and what the referer wants.
+				if ($strValidReferer == '[PHP_SELF]')
+				{
+					//add self referer.
+					if (!empty($_SERVER['HTTPS']))
+						$strServer = "https://";
+					else
+						$strServer = "http://";
+					$strValidReferer = $strServer.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
+				}
 				#echo "Valid Referer : ".$strValidReferer."<br />\n";
-				if ($strValidReferer == $_SERVER['HTTP_REFERER'])
+				#if ($strValidReferer == $_SERVER['HTTP_REFERER'])
+				#echo $strValidReferer."<br />\n";
+				#echo $strReferer."<br />\n";
+				if ($strValidReferer == $strReferer)
 				{
 					#echo $strValidReferer.' eq '.$_SERVER['HTTP_REFERER']."<br />\n";
 					$boolValid = true;
@@ -801,7 +857,9 @@ class form_process
 				#echo "boolvalid is false<br />\n";
 				$this->boolError = true;
 				#$this->strErrorMsg .= '<span style="color:#900;">Invalid Referer - You must use the same form provided by the host processing it</span><br />';
-				$this->strErrorMsg .= $this->arrFormConf['errorMsg']['referer']."<br />\n";
+				// parse error message replace [referer] block.
+				$this->strErrorMsg .= str_replace("[referer]", $strReferer, $this->arrFormConf['errorMsg']['referer'])."<br />\n";
+				#$this->strErrorMsg .= $this->arrFormConf['errorMsg']['referer']."<br />\n";
 			}
 		}// end if array key exists validReferer
 	}
@@ -838,6 +896,58 @@ class form_process
 			}
 		}
 	}
+	############################################################################
+	# checkEmail                                                               #
+	#    Validation Function - checks for a valid email address                #
+	#    http://www.devshed.com/c/a/PHP/Email-Address-Verification-with-PHP/2/ #
+	#    this needs to be modified to validate vs all RFC's                    #
+	#    http://www.linuxjournal.com/article/9585                              #
+	############################################################################
+	function checkMatch($arrMatch)
+	{
+
+					#$this->checkMatch($_REQUEST[$arrValue[0]], $_REQUEST[$arrValue[1]]);
+
+
+		#if ($strVar1 != $strVar2)
+		if ($_REQUEST[$arrMatch[0]] != $_REQUEST[$arrMatch[1]])
+		{
+			// set error message.
+			$this->boolError = true;
+
+			//create error message, see if fieldError array exists for "our" fields.
+			//check first field for error text, if it exists store in strField.
+			if (array_key_exists($arrMatch[0], $this->arrFormConf['fieldError']))
+				$strField = $this->arrFormConf['fieldError'][$arrMatch[0]];
+			else
+				$strField = $arrMatch[0];
+			$strErrorMsg = str_replace("[field-a]", $strField, $this->arrFormConf['errorMsg']['match']);
+			//check second field for error text, if it exists store in strField.
+			if (array_key_exists($arrMatch[1], $this->arrFormConf['fieldError']))
+				$strField = $this->arrFormConf['fieldError'][$arrMatch[1]];
+			else
+				$strField = $arrMatch[1];
+			$strErrorMsg = str_replace("[field-b]", $strField, $strErrorMsg);
+			// append a break to the error.
+			$strErrorMsg .= "<br />\n";
+			// take functions error message and append to class error message.
+			$this->strErrorMsg .= $strErrorMsg;
+			#$this->strErrorMsg .= $this->arrFormConf['errorMsg']['match']."<br />\n";
+			#$this->strErrorMsg .= str_replace("[field-a]", $strVar1, $this->arrFormConf['errorMsg']['required'])."<br />\n";
+			// Change fieldText color with errorWrapper
+			if (array_key_exists($arrMatch[0], $this->arrFormConf['fieldText']))
+			{
+				$this->strTemplate = str_replace($this->arrFormConf['fieldText'][$arrMatch[0]],$this->arrFormConf['errorWrapper'][0].$this->arrFormConf['fieldText'][$arrMatch[0]].$this->arrFormConf['errorWrapper'][1],$this->strTemplate);
+			}
+			if (array_key_exists($arrMatch[1], $this->arrFormConf['fieldText']))
+			{
+				$this->strTemplate = str_replace($this->arrFormConf['fieldText'][$arrMatch[1]],$this->arrFormConf['errorWrapper'][0].$this->arrFormConf['fieldText'][$arrMatch[1]].$this->arrFormConf['errorWrapper'][1],$this->strTemplate);
+			}
+
+
+		}
+	}
+
 ################################################################################
 #                                                                              #
 ################################################################################
