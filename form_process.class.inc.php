@@ -5,7 +5,7 @@
 #   Phil Allen - phil@hilands.com                                              #
 # Last Edited By :                                                             #
 #   phil@hilands.com                                                           #
-# Version : 2011052500                                                         #
+# Version : 2011060800                                                         #
 #                                                                              #
 # Copyright :                                                                  #
 #   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011 Philip Allen            #
@@ -87,6 +87,7 @@ class form_process
 	var $strFile = ""; //"form.tpl.html"; // this should be pulled from contructor input?
 	var $strTemplate = ""; // container for html template
 	var $strTemplateOrig = "";
+	var $boolFile = true;
 	var $intCount = 0; // counter used with arrFields
 	var $arrFormConf = array(); // formFile
 	var $boolError = false;
@@ -108,11 +109,19 @@ class form_process
 		#$arrTextareaFields = parse_textarea_fields($strTemplate,count($arrFields));
 		#$arrSelectFields = parse_select_fields($strTemplate,count($arrFields));
 		#$arrFields = array_merge($arrFields, $arrInputFields,$arrTextareaFields,$arrSelectFields);
+		// check if arraykey exist for 'boolFile' if not then boolFile = true;
+		// if it exists push to boolFile. preset to true now load from arrFormConf
+		// still need if arrkey exists.
+		if (array_key_exists('boolFile', $this->arrFormConf)) {
+			$this->boolFile = $this->arrFormConf['boolFile'];
+		}
+		#echo 'bool file="'.$this->boolFile.'"<br />';
 		$this->getForm();
 		$this->parse_input_fields(); // find all fields starting with <input and stash in $this->arrFields
 		$this->parse_textarea_fields(); // find all fields starting with <textarea and stash in $this->arrFields
 		$this->parse_select_fields(); // find all fields starting with <select and stash in $this->arrFields
 		//processInputData(); // run this from class processor file.
+		#echo $this->strTemplate;
 	}
 	################################################################################
 	# setArrRequest                                                                #
@@ -236,42 +245,53 @@ class form_process
 		#$strFile = "form_allphp.tpl.html";
 		// check if file is web file.
 		#echo $this->strFile;
-		if (substr ($this->strFile, 0, 7) != "http://")
+		#echo 'bool file="'.$this->boolFile.'"<br />';
+		#echo 'arrFormConf="'.$this->arrFormConf['formFile'].'"<br />';
+		if ($this->boolFile)
 		{
-			$boolLocalFile = true;
-			if (!file_exists($this->strFile) || filesize($this->strFile) == 0)
+			if (substr ($this->strFile, 0, 7) != "http://")
 			{
-				echo 'Form template file is empty or does not exist : '.$this->strFile;
+				$boolLocalFile = true;
+				if (!file_exists($this->strFile) || filesize($this->strFile) == 0)
+				{
+					echo 'Form template file is empty or does not exist : '.$this->strFile;
+					exit;
+				}
+			}
+			else
+			{
+				$boolLocalFile = false;
+			}
+			if(!$fileHandle = fopen($this->strFile, "r"))
+			{
+				echo 'cannot read file '.$this->strFile.'<br />';
 				exit;
 			}
-		}
-		else
-		{
-			$boolLocalFile = false;
-		}
-		if(!$fileHandle = fopen($this->strFile, "r"))
-		{
-			echo 'cannot read file '.$this->strFile.'<br />';
-			exit;
-		}
-		else
-		{
+			// open file and stor in strTemplate
 			if ($boolLocalFile)
 				$this->strTemplate = fread($fileHandle, filesize($this->strFile));
 			else
 				$this->strTemplate = stream_get_contents($fileHandle);
 			fclose($fileHandle);
-			if(preg_match("[frmAction]", $this->strTemplate))
-			{
-				$this->strTemplate = str_replace("[frmAction]", $_SERVER['REQUEST_URI'], $this->strTemplate);
-				#$this->strTemplate = str_replace("[frmAction]", $_SERVER['PHP_SELF'], $this->strTemplate);
-			}
-			$this->strTemplateOrig = $this->strTemplate;
-			// orig will be used as non parsed all we'll do is remove the [errorMsg]
-			if(preg_match("[errorMsg]", $this->strTemplateOrig))
-			{
-				$this->strTemplateOrig = str_replace("[errorMsg]", "", $this->strTemplateOrig);
-			}
+		}
+		else
+		{
+			$this->strTemplate = $this->arrFormConf['formFile'];
+		}
+		// this isn't loading the data being sent......
+		#echo $this->strTemplate; exit;
+// this is the old processing.
+// no else should be needed as we exit.
+		if(preg_match("[frmAction]", $this->strTemplate))
+		{
+			$this->strTemplate = str_replace("[frmAction]", $_SERVER['REQUEST_URI'], $this->strTemplate);
+			#$this->strTemplate = str_replace("[frmAction]", $_SERVER['PHP_SELF'], $this->strTemplate);
+		}
+		$this->strTemplateOrig = $this->strTemplate;
+		// orig will be used as non parsed all we'll do is remove the [errorMsg]
+		if(preg_match("[errorMsg]", $this->strTemplateOrig))
+		{
+			$this->strTemplateOrig = str_replace("[errorMsg]", "", $this->strTemplateOrig);
 		}
 	}
 	################################################################################
