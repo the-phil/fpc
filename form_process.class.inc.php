@@ -5,7 +5,7 @@
 #   Phil Allen - phil@hilands.com                                              #
 # Last Edited By :                                                             #
 #   phil@hilands.com                                                           #
-# Version : 2011060800                                                         #
+# Version : 2011070100                                                         #
 #                                                                              #
 # Copyright :                                                                  #
 #   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011 Philip Allen            #
@@ -91,8 +91,11 @@ class form_process
 	var $intCount = 0; // counter used with arrFields
 	var $arrFormConf = array(); // formFile
 	var $boolError = false;
+	var $boolTokenTimeLimitError = false;
+	var $boolTokenError = false;
 	var $strErrorMsg = "";
 	var $arrRequest = array (); // post and get requests $_REQUESTS
+	var $strRandomSeed = 'f457c545a9ded88f18ecee47145a72c0';
 	####################################################################
 	# Constructor                                                      #
 	####################################################################
@@ -101,9 +104,11 @@ class form_process
 	// php 5 construct
 	public function __construct($arrFormConf=array())
 	{
+		$this->arrFormConf = $arrFormConf;
+		$this->setToken();
+		$this->setUserAgent($this->strRandomSeed);
 		// handle request information
 		$this->setArrRequest($_REQUEST);
-		$this->arrFormConf = $arrFormConf;
 		$this->strFile = $this->arrFormConf['formFile'];
 		#$arrInputFields = parse_input_fields($strTemplate,count($arrFields));
 		#$arrTextareaFields = parse_textarea_fields($strTemplate,count($arrFields));
@@ -115,6 +120,28 @@ class form_process
 		if (array_key_exists('boolFile', $this->arrFormConf)) {
 			$this->boolFile = $this->arrFormConf['boolFile'];
 		}
+/*
+		if (array_key_exists('genToken', $this->arrFormConf))
+		{
+			// this stuff needs to go on error recheck too....
+			#$strTokenTime = time() - $_SESSION['token_time'];
+			#echo "strTokenTime :".$strTokenTime." - ".time().":".$_SESSION['token_time']."<br />\n";
+			#if ($strTokenTime >= $this->arrFormConf['tokenTimer'])
+			#	echo "timer expired";
+			// need to add regen token...
+			if (!array_key_exists('token', $_POST))
+			#if (!array_key_exists('token', $_POST) or $strTokenTime >= $this->arrFormConf['tokenTimer'])
+			{
+				$this->strToken = md5(uniqid(rand(), true));
+				$_SESSION['token'] = $this->strToken;
+				$_SESSION['token_time'] = time();
+				// need to add an input hidden for token value.. hmm.. have to get the value to the hidden field somehow.
+				// done in getForm [token]
+			}
+			else // this gets rid of php error in logs as when its regened strToken doesn't exist. then gen form acts strange.
+				$this->strToken = $_SESSION['token'];
+		}
+*/
 		#echo 'bool file="'.$this->boolFile.'"<br />';
 		$this->getForm();
 		$this->parse_input_fields(); // find all fields starting with <input and stash in $this->arrFields
@@ -123,6 +150,14 @@ class form_process
 		//processInputData(); // run this from class processor file.
 		#echo $this->strTemplate;
 	}
+	####################################################################
+	# Destructor                                                       #
+	####################################################################
+#	function __destruct() {
+#		$this->strToken = md5(uniqid(rand(), true));
+#		$_SESSION['token'] = $this->strToken;
+#		$_SESSION['token_time'] = time();
+#	}
 	################################################################################
 	# setArrRequest                                                                #
 	#    set Request Data (used for edit data)                                     #
@@ -282,14 +317,28 @@ class form_process
 		#echo $this->strTemplate; exit;
 // this is the old processing.
 // no else should be needed as we exit.
-		if(preg_match("[frmAction]", $this->strTemplate))
+		if(preg_match("/\[frmAction\]/", $this->strTemplate))
 		{
 			$this->strTemplate = str_replace("[frmAction]", $_SERVER['REQUEST_URI'], $this->strTemplate);
 			#$this->strTemplate = str_replace("[frmAction]", $_SERVER['PHP_SELF'], $this->strTemplate);
 		}
+		#$this->strTemplateOrig = $this->strTemplate;
+		// find [token] check for tokenTimer to see if we are using tokens
+		#if (array_key_exists('genToken', $this->arrFormConf))
+		if (array_key_exists('tokenTimer', $this->arrFormConf))
+		{
+			if(preg_match("/\[token\]/", $this->strTemplate))
+			{
+				// This sets the new token in the form, from setToken
+				#$this->strTemplateOrig = str_replace("[token]", $this->strToken, $this->strTemplateOrig);
+				$this->strTemplate = str_replace("[token]", $this->strToken, $this->strTemplate);
+				#$this->strTemplate = str_replace("[token]", $this->strToken, $this->strTemplate);
+			}
+		}
+		// stash template in template orig.
 		$this->strTemplateOrig = $this->strTemplate;
 		// orig will be used as non parsed all we'll do is remove the [errorMsg]
-		if(preg_match("[errorMsg]", $this->strTemplateOrig))
+		if(preg_match("/\[errorMsg\]/", $this->strTemplateOrig))
 		{
 			$this->strTemplateOrig = str_replace("[errorMsg]", "", $this->strTemplateOrig);
 		}
@@ -590,7 +639,7 @@ class form_process
 		########################################################################
 		#                                                                      #
 		########################################################################
-		if(preg_match("[errorMsg]", $this->strTemplate))
+		if(preg_match("/\[errorMsg\]/", $this->strTemplate))
 		{
 			$this->strTemplate = str_replace("[errorMsg]", $this->strErrorMsg, $this->strTemplate);
 		}
@@ -604,16 +653,43 @@ class form_process
 				################################################################
 				#                                                              #
 				################################################################
+				/*
+				// add html 5 things in here.
+				http://www.w3schools.com/html5/html5_form_input_types.asp
+				http://www.w3schools.com/html5/tag_input.asp
+				button, checkbox, color, date, datetime, datetime-local, email, file, hidden, image, month, number, password,
+				radio, range, reset, search, submit, tel, text, time, url, week
+				*/
 				case 'text':
 				case 'hidden':
 				case 'image': // ??
 				case 'password': //??
+				case 'email':
+				case 'url':
+				case 'range':
+				case 'search':
+				case 'color':
 					// set arrfields values
 					#echo $arrFields[$strKey][$arrValue]['value']."<br />\n"; //oops extra var
 					#echo $arrFields[$strKey]['value']."<br />\n";
 					if (array_key_exists($arrValue['name'], $this->arrRequest))
 					{
-						$this->arrFields[$strKey]['nvalue'] = $this->arrRequest[$arrValue['name']]; // need check if array_key_exists
+						// if our token timer runs out or token doesn't match push str token into form.
+						#if ($this->boolTokenTimeLimitError && $arrValue['name'] == 'token') // if we hit the time limit do special token work around.
+
+						#if (($this->boolTokenError || $this->boolTokenTimeLimitError) && $arrValue['name'] == 'token') // if we hit the time limit do special token work around.
+						// we do this so the token does NOT take the value of the form
+						if ($arrValue['name'] == 'token') // if we hit the time limit do special token work around.
+						{
+							#echo 'change token to :"'.$this->strToken.'"<br />';
+							$this->arrFields[$strKey]['nvalue'] = $this->strToken; // need check if array_key_exists
+						}
+						else
+							$this->arrFields[$strKey]['nvalue'] = $this->arrRequest[$arrValue['name']]; // need check if array_key_exists
+
+						// don't reset token field with error
+						#if ($arrValue['name'] != 'token')
+						#	$this->arrFields[$strKey]['nvalue'] = $this->arrRequest[$arrValue['name']]; // need check if array_key_exists
 						$this->arrFields[$strKey]['nform'] = str_replace('value="'.$this->arrFields[$strKey]['value'].'"','value="'.$this->arrFields[$strKey]['nvalue'].'"', $this->arrFields[$strKey]['form']);
 						$this->strTemplate = str_replace($this->arrFields[$strKey]['form'], $this->arrFields[$strKey]['nform'], $this->strTemplate);
 					}
@@ -676,15 +752,19 @@ class form_process
 					$strTempForm = $this->arrFields[$strKey]['form'];
 					foreach ($this->arrFields[$strKey]['options'] as $strArrValue)
 					{
-						$strTempOption = str_replace(" selected", "", $strArrValue['option']);
+						// remove "selected" from form. moved this into the is set incase there is no input, we use html default
+						#echo 'arrValue : '.$strArrValue['option'].'<br /><br />';
+#						$strTempOption = str_replace(" selected", "", $strArrValue['option']);
 						// this won't work as we are looping the same "template"
 						// so we'll add a variable before the foreach. and finish it outside the loop.
 						#$arrFields[$strKey]['nform'] = str_replace($strArrValue['option'], $strTempOption, $arrFields[$strKey]['form']);
-						$strTempForm = str_replace($strArrValue['option'], $strTempOption, $strTempForm);
+#						$strTempForm = str_replace($strArrValue['option'], $strTempOption, $strTempForm);
 						#echo "select request : ".$_REQUEST[$arrValue['name']]."<br />\n";
 						#echo "Option Name : ".$strArrValue['name']."<br />\n";
 						if (isset($this->arrRequest[$arrValue['name']]))
 						{
+							$strTempOption = str_replace(" selected", "", $strArrValue['option']);
+							$strTempForm = str_replace($strArrValue['option'], $strTempOption, $strTempForm);
 							if ($this->arrRequest[$arrValue['name']] == $strArrValue['value'])
 							{
 								#echo "here : &gt;".$strArrValue['name']."&lt;<br />\n";
@@ -855,7 +935,9 @@ class form_process
 						$strServer = "https://";
 					else
 						$strServer = "http://";
-					$strValidReferer = $strServer.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
+					// added htmlspecialchars just in case return with xss some how.
+					$strValidReferer = htmlspecialchars($strServer.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF']);
+					#$strValidReferer = $strServer.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'];
 				}
 				#echo "Valid Referer : ".$strValidReferer."<br />\n";
 				#if ($strValidReferer == $_SERVER['HTTP_REFERER'])
@@ -908,12 +990,21 @@ class form_process
 		//
 		if (!$boolValid)
 		{
+			if (array_key_exists($strName, $this->arrFormConf['fieldError']))
+				$strField = $this->arrFormConf['fieldError'][$strName];
+			else
+				$strField = $strName;
+
 			$this->boolError = true;
-			$this->strErrorMsg .= $this->arrFormConf['errorMsg']['email']."<br />\n";
+			$this->strErrorMsg .= str_replace("[field]", $strField, $this->arrFormConf['errorMsg']['email'])."<br />\n";
+			// check fieldText should see if it exists ...
 			if (array_key_exists($strName, $this->arrFormConf['fieldText']))
 			{
+			// replace array with wrap + array in strTemplate
 				$this->strTemplate = str_replace($this->arrFormConf['fieldText'][$strName],$this->arrFormConf['errorWrapper'][0].$this->arrFormConf['fieldText'][$strName].$this->arrFormConf['errorWrapper'][1],$this->strTemplate);
 			}
+#			$this->boolError = true;
+#			$this->strErrorMsg .= $this->arrFormConf['errorMsg']['email']."<br />\n";
 		}
 	}
 	############################################################################
@@ -925,16 +1016,12 @@ class form_process
 	############################################################################
 	function checkMatch($arrMatch)
 	{
-
 					#$this->checkMatch($_REQUEST[$arrValue[0]], $_REQUEST[$arrValue[1]]);
-
-
 		#if ($strVar1 != $strVar2)
 		if ($_REQUEST[$arrMatch[0]] != $_REQUEST[$arrMatch[1]])
 		{
 			// set error message.
 			$this->boolError = true;
-
 			//create error message, see if fieldError array exists for "our" fields.
 			//check first field for error text, if it exists store in strField.
 			if (array_key_exists($arrMatch[0], $this->arrFormConf['fieldError']))
@@ -963,11 +1050,176 @@ class form_process
 			{
 				$this->strTemplate = str_replace($this->arrFormConf['fieldText'][$arrMatch[1]],$this->arrFormConf['errorWrapper'][0].$this->arrFormConf['fieldText'][$arrMatch[1]].$this->arrFormConf['errorWrapper'][1],$this->strTemplate);
 			}
-
-
 		}
 	}
+	############################################################################
+	# setToken                                                                 #
+	############################################################################
+	function setToken()
+	{
+		// creates token, if token exists store in "strTokenCurrent"
+		#if (array_key_exists('genToken', $this->arrFormConf))
+		if (array_key_exists('tokenTimer', $this->arrFormConf))
+		{
+		#echo 'yes<br />';
+			#$this->strToken
+			#$this->strTokenChk
+			#$_SESSION['token']
+			#$this->strTokenTimeChk
+			#$_SESSION['token_time'] 
 
+			// stash old session variables for use with check.
+			if (array_key_exists('token', $_SESSION))
+				$this->strTokenChk = $_SESSION['token'];
+			if (array_key_exists('token_time', $_SESSION))
+				$this->strTokenTimeChk = $_SESSION['token_time'];
+			// create new session vars and token var for form.
+#echo 'making new token!<br />';
+			$this->strToken = md5(uniqid(rand(), true));
+			$_SESSION['token'] = $this->strToken;
+			$_SESSION['token_time'] = time();
+			// this stuff needs to go on error recheck too....
+			#$strTokenTime = time() - $_SESSION['token_time'];
+			#echo "strTokenTime :".$strTokenTime." - ".time().":".$_SESSION['token_time']."<br />\n";
+			#if ($strTokenTime >= $this->arrFormConf['tokenTimer'])
+			#	echo "timer expired";
+			// need to add regen token...
+/*
+			if (!array_key_exists('token', $_POST))
+			#if (!array_key_exists('token', $_POST) or $strTokenTime >= $this->arrFormConf['tokenTimer'])
+			{
+				$this->strToken = md5(uniqid(rand(), true));
+				$_SESSION['token'] = $this->strToken;
+				$_SESSION['token_time'] = time();
+				// need to add an input hidden for token value.. hmm.. have to get the value to the hidden field somehow.
+				// done in getForm [token]
+			}
+			else // this gets rid of php error in logs as when its regened strToken doesn't exist. then gen form acts strange.
+				$this->strToken = $_SESSION['token'];
+*/
+		}
+	}
+	############################################################################
+	# checkToken                                                               #
+	#    Validation Function - checks for a valid token                        #
+	#    http://phpsec.org/projects/guide/2.html                               #
+    #    http://shiflett.org/articles/cross-site-request-forgeries             #
+	############################################################################
+	function checkToken()
+	{
+		$intTokenTimeLimit = $this->arrFormConf['tokenTimer'];
+		#echo "this arrformconf :<pre>";print_r($this->arrFormConf);echo"</pre><br />\n";
+		#echo "token timer: ".$intTokenTimeLimit."<br />\n";
+		#$intTokenTimeLimit = '300'; // time in seconds 300 = 5 minutes
+		$boolTokenTimeLimit = false;
+		$boolToken = false;
+		// check token and timer
+		if (array_key_exists('token', $_SESSION))
+		{
+			#if($_POST['token'] == $_SESSION['token'])
+			if($_POST['token'] == $this->strTokenChk)
+				$boolToken = true;
+			#$strTokenTime = time() - $_SESSION['token_time'];
+			$strTokenTime = time() - $this->strTokenTimeChk;
+			if ($strTokenTime <= $intTokenTimeLimit)
+				$boolTokenTimeLimit = true;
+		}
+		if (!$boolTokenTimeLimit)
+		{
+			$this->boolTokenTimeLimitError = true;
+			$this->boolError = true;
+			#$this->strErrorMsg .= "Security token ran out of time. Please click submit on the form.<br />\n";
+			$this->strErrorMsg .= $this->arrFormConf['errorMsg']['tokentime']."<br />\n";
+			$this->strToken = md5(uniqid(rand(), true));
+			$_SESSION['token'] = $this->strToken;
+			$_SESSION['token_time'] = time();
+		}
+		if (!$boolToken)
+		{
+			$this->boolTokenError = true;
+			$this->boolError = true;
+			#$this->strErrorMsg .= "Token does not match<br />\n";
+			$this->strErrorMsg .= $this->arrFormConf['errorMsg']['token']."<br />\n";
+			$this->strToken = md5(uniqid(rand(), true));
+			$_SESSION['token'] = $this->strToken;
+			$_SESSION['token_time'] = time();
+		}
+/*
+		$intTokenTimeLimit = $this->arrFormConf['tokenTimer'];
+		#echo "this arrformconf :<pre>";print_r($this->arrFormConf);echo"</pre><br />\n";
+		#echo "token timer: ".$intTokenTimeLimit."<br />\n";
+		#$intTokenTimeLimit = '300'; // time in seconds 300 = 5 minutes
+		$boolTokenTimeLimit = false;
+		$boolToken = false;
+		// check token timer
+		if (array_key_exists('token', $_SESSION))
+		{
+			if($_POST['token'] == $_SESSION['token'])
+				$boolToken = true;
+			$strTokenTime = time() - $_SESSION['token_time'];
+			if ($strTokenTime <= $intTokenTimeLimit)
+				$boolTokenTimeLimit = true;
+		}
+		if (!$boolTokenTimeLimit)
+		{
+			$this->boolTokenTimeLimitError = true;
+			$this->boolError = true;
+			$this->strErrorMsg .= "Security token ran out of time. Please click submit on the form.<br />\n";
+			// reset timer and token
+			#$strOldToken = "'".$_SESSION['token']."'";
+			#echo "old token : ".$strOldToken."<br />\n";
+			#echo "strTemplate : ".$this->strTemplate."<br />\n";
+			#echo "strTemplateOrig : ".$this->strTemplateOrig."<br />\n";
+
+			$this->strToken = md5(uniqid(rand(), true));
+			$_SESSION['token'] = $this->strToken;
+			$_SESSION['token_time'] = time();
+			// need to get old token and reset form
+			#if(preg_match('7b973947fc7f15797967c4c774efa5f9', $this->strTemplate))
+				#$this->strTemplateOrig = str_replace('7b973947fc7f15797967c4c774efa5f9', $this->strToken, $this->strTemplateOrig);
+			#if(preg_match($strOldToken, $this->strTemplate))
+			#	$this->strTemplateOrig = str_replace($strOldToken, $this->strToken, $this->strTemplateOrig);
+				#$this->strTemplate = str_replace('[token]', $this->strToken, $this->strTemplate);
+				#$this->strTemplate = str_replace($strOldToken, $this->strToken, $this->strTemplate);
+		}
+		if (!$boolToken)
+		{
+			$this->boolTokenError = true;
+			$this->boolError = true;
+			$this->strErrorMsg .= "Token does not match<br />\n";
+			$this->strToken = md5(uniqid(rand(), true));
+			$_SESSION['token'] = $this->strToken;
+			$_SESSION['token_time'] = time();
+		}
+		// reset token
+		// take functions error message and append to class error message.
+		#$this->strErrorMsg .= $strErrorMsg;
+*/
+	}
+	############################################################################
+	# setUserAgent                                                             #
+	#    Validation Function - checks for a valid token                        #
+	#    http://phpsec.org/projects/guide/2.html                               #
+    #    http://shiflett.org/articles/cross-site-request-forgeries             #
+	############################################################################
+	function setUserAgent($strRandomSeed)
+	{
+		$_SESSION['user_agent'] = md5($_SERVER['HTTP_USER_AGENT'].$strRandomSeed); // should help with session hijacking
+	}
+	############################################################################
+	# checkUserAgent                                                           #
+	#    Validation Function - checks for a valid token                        #
+	#    http://phpsec.org/projects/guide/2.html                               #
+    #    http://shiflett.org/articles/cross-site-request-forgeries             #
+	############################################################################
+	function checkUserAgent($strRandomSeed)
+	{
+		if ($_SESSION['user_agent'] != md5($_SERVER['HTTP_USER_AGENT'].$strRandomSeed))
+		{
+			$this->boolError = true;
+			$this->strErrorMsg .= $this->arrFormConf['errorMsg']['useragent']."<br />\n";
+		}
+	}
 ################################################################################
 #                                                                              #
 ################################################################################
