@@ -1,79 +1,129 @@
 <?php
-################################################################################
-# File Name : form_process.class.inc.php                                       #
-# Author(s) :                                                                  #
-#   Phil Allen - phil@hilands.com                                              #
-# Last Edited By :                                                             #
-#   phil@hilands.com                                                           #
-# Version : 2011070100                                                         #
-#                                                                              #
-# Copyright :                                                                  #
-#   Copyright 2005, 2006, 2007, 2008, 2009, 2010, 2011 Philip Allen            #
-#                                                                              #
-#   This file is free software; you can redistribute it and/or modify          #
-#   it under the terms of the GNU General Public License as published          #
-#   by the Free Software Foundation; either version 2 of the License,          #
-#   or (at your option) any later version.                                     #
-#                                                                              #
-#   This File is distributed in the hope that it will be useful,               #
-#   but WITHOUT ANY WARRANTY; without even the implied warranty of             #
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              #
-#   GNU General Public License for more details.                               #
-#                                                                              #
-#   You should have received a copy of the GNU General Public License          #
-#   along with This File; if not, write to the Free Software                   #
-#   Foundation, Inc., 51 Franklin St, Fifth Floor,                             #
-#   Boston, MA  02110-1301  USA                                                #
-#                                                                              #
-# External Files:                                                              #
-#   List of External Files all require/includes                                #
-#                                                                              #
-# General Information (algorithm) :                                            #
-#                                                                              #
-# Functions :                                                                  #
-#   see classes                                                                #
-#                                                                              #
-# Classes :                                                                    #
-#   tpl                                                                        #
-#                                                                              #
-# CSS :                                                                        #
-#   db_error - used in span for custom database errors                         #
-#   db_sql_error_message - used in span for SQL default error                  #
-#       messages and error numbers                                             #
-#                                                                              #
-# JavaScript :                                                                 #
-#                                                                              #
-# Change Log :                                                                 #
-#   Got rid of the "remove slashes" it was redundant and caused errors         #
-#   All db security should be done outside of this class                       #
-#   20110522 changed PHP_SELF to REQUEST_URI for [frmAction]                   #
-#      this allows ?input follow throughs                                      #
-#      changed referer to remove ?input variable. for valid referers           #
-#                                                                              #
-# Variable Lexicon :                                                           #
-#   String             - $strStringName                                        #
-#   Array              - $arrArrayName                                         #
-#   Resource           - $resResourceName                                      #
-#   Reference Variable - $refReferenceVariableName  (aka object)               #
-#   Integer            - $intIntegerName                                       #
-#   Boolean            - $boolBooleanName                                      #
-#   Function           - function_name (all lowercase _ as space)              #
-#   Class              - class_name (all lowercase _ as space)                 #
-#                                                                              #
-# Commenting Style :                                                           #
-#   # (in boxes) denotes commenting for large blocks of code, function         #
-#       and classes                                                            #
-#   # (single at beginning of line) denotes debugging infromation              #
-#       like printing out array data to see if data has properly been          #
-#       entered                                                                #
-#   # (single indented) denotes commented code that may later serve            #
-#       some type of purpose                                                   #
-#   // used for simple notes inside of code for easy follow capability         #
-#   /* */ is only used to comment out mass lines of code, if we follow         #
-#       the above way of code we will be able to comment out entire            #
-#       files for major debugging                                              #
-#                                                                              #
-################################################################################
+########################################################################
+# File Name : form_process.class.inc.php                               #
+# Author(s) :                                                          #
+#   Phil Allen - phil@hilands.com                                      #
+# Last Edited By :                                                     #
+#   20110525 Removed the magic quotes for setArrRequest function as it #
+#      should be done by user, changed frmAction to REQUEST_URI        #
+#      instead of PHP_SELF, added a check to see if "name" exists in   #
+#      input, Fixed handling of html vs xhtml endings /> vs >, Added   #
+#      "Match" validation for checking if two fields are identical,    #
+#      Fixed error message text with required, Fixed get input while   #
+#      checking referers, Added Referer to main error block.           #
+#      phil@hilands.com                                                #
+#   20110608 added the ability to set the template as a file or string #
+#      phil@hilands.com                                                #
+#   20110701 added token timer, added useragent checker, added random  #
+#      seed, Testing Destructor, Added html 5 input types (email, url, #
+#      range, search, color), Fixed issue with select processing and   #
+#      selected, Added check on validreferer for possible xss attack,  #
+#      Added validation for configuration array must have fieldError,  #
+#      Fixed pregmatch in getForm and processInputData.                #
+#      phil@hilands.com                                                #
+#   20131001 Cleaned header and comments phil@hilands.com              #
+#                                                                      #
+# Version : 2013100100                                                 #
+#                                                                      #
+# Copyright :                                                          #
+#   Copyright (C) 2005,2006,2007,2008,2009,2010,2011,2012,2013         #
+#   Philip J Allen                                                     #
+#                                                                      #
+#   This file is free software; you can redistribute it and/or modify  #
+#   it under the terms of the GNU General Public License as published  #
+#   by the Free Software Foundation; either version 2 of the License,  #
+#   or (at your option) any later version.                             #
+#                                                                      #
+#   This File is distributed in the hope that it will be useful,       #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of     #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      #
+#   GNU General Public License for more details.                       #
+#                                                                      #
+#   You should have received a copy of the GNU General Public License  #
+#   along with This File; if not, write to the Free Software           #
+#   Foundation, Inc., 51 Franklin St, Fifth Floor,                     #
+#   Boston, MA  02110-1301  USA                                        #
+#                                                                      #
+# General Information (algorithm) :                                    #
+#   An attempt to simplify html form processing by taking a raw HTML   #
+#   form and automating the error handling.                            #
+#    * Takes both get and post data via the $_REQUEST variable.        #
+#    * Reads configuration array                                       #
+#    * Processes HTML file                                             #
+#    * Parses form input values                                        #
+#                                                                      #
+# Usage :                                                              #
+#   include_once ("form_process.class.inc.php"); //include class file  #
+#   // Define form configuration array                                 #
+#   $arrFormConf = array(......)                                       #
+#      .....                                                           #
+#      formFile - template                                             #
+#      validReferer - array of valid referer URL's                     #
+#      emailData - array of email data: from, to, cc, subject, message #
+#      fieldText - array of form input "name" => "text title"          #
+#      validation - array form input name => array required, email,    #
+#         captcha, etc.                                                #
+#      errorWrapper - array keys 0 to start, 1 to end to wrap form     #
+#         input text                                                   #
+#      errorMsgWrapper - array keys 0 to start, 1 to end to wrap error #
+#         message                                                      #
+#      errorMsg - array keys referer, required, email, captcha, etc    #
+#         => error                                                     #
+#   $refForm = new form_process($arrFormConf); // instantiate object   #
+#   // check if form has been submitted                                #
+#   if (array_key_exists('submit', $_REQUEST))                         #
+#      $boolDataSent = true;                                           #
+#   else                                                               #
+#      $boolDataSent = false;                                          #
+#   // If data has been sent process                                   #
+#   if ($boolDataSent)                                                 #
+#   {                                                                  #
+#      $refForm->checkReferer();                                       #
+#      $refForm->checkValidation();                                    #
+#      // handle errors if they exist                                  #
+#      if ($refForm->returnErrors())                                   #
+#      {                                                               #
+#         $refForm->processInputData();                                #
+#         echo $refForm->strTemplate;                                  #
+#      }                                                               #
+#      // if no errors                                                 #
+#      else                                                            #
+#      {                                                               #
+#         echo "data has been submitted!";                             #
+#      }                                                               #
+#   }                                                                  #
+#   else                                                               #
+#   {                                                                  #
+#      echo $refForm->strTemplateOrig;                                 #
+#   }                                                                  #
+#                                                                      #
+# Variable Lexicon :                                                   #
+#   String             - $strStringName                                #
+#   Array              - $arrArrayName                                 #
+#   Resource           - $resResourceName                              #
+#   Reference Variable - $refReferenceVariableName  (aka object)       #
+#   Integer            - $intIntegerName                               #
+#   Boolean            - $boolBooleanName                              #
+#   Function           - function_name (all lowercase _ as space)      #
+#   Class              - class_name (all lowercase _ as space)         #
+#                                                                      #
+# Commenting Style :                                                   #
+#   # (in boxes) denotes commenting for large blocks of code, function #
+#       and classes                                                    #
+#   # (single at beginning of line) denotes debugging infromation      #
+#       like printing out array data to see if data has properly been  #
+#       entered                                                        #
+#   # (single indented) denotes commented code that may later serve    #
+#       some type of purpose                                           #
+#   // used for simple notes inside of code for easy follow capability #
+#   /* */ is only used to comment out mass lines of code, if we follow #
+#       the above way of code we will be able to comment out entire    #
+#       files for major debugging                                      #
+#                                                                      #
+########################################################################
+########################################################################
+# Class form_process                                                   #
+########################################################################
 /*
 How to handle editing.
 Shall we use arrREQUEST to take input on all posted data. Do we do a data set
@@ -219,11 +269,11 @@ class form_process
 	{
 		// create search and replace arrays
 		$arrSearch = array(
-			chr(145), //ë
-			chr(146), //í
-			chr(147), //ì
-			chr(148), //î
-			chr(151) //ó
+			chr(145), // ‚Äò start single "smart" quote
+			chr(146), // ‚Äô end single "smart" quote
+			chr(147), // ‚Äú start double "smart" quote
+			chr(148), // ‚Äù end double "smart" quote
+			chr(151) // ‚Äî en or em dash?
 			);
 		$arrReplace = array(
 			"&#8216;",
@@ -1008,11 +1058,8 @@ class form_process
 		}
 	}
 	############################################################################
-	# checkEmail                                                               #
-	#    Validation Function - checks for a valid email address                #
-	#    http://www.devshed.com/c/a/PHP/Email-Address-Verification-with-PHP/2/ #
-	#    this needs to be modified to validate vs all RFC's                    #
-	#    http://www.linuxjournal.com/article/9585                              #
+	# checkMatch                                                               #
+	#    Validation Function - check is two fields are identical               #
 	############################################################################
 	function checkMatch($arrMatch)
 	{
