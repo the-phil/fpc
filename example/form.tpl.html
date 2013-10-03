@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en" dir="ltr">
+<head>
+	<title>
+		Form
+	</title>
+	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+	<meta http-equiv="Content-Style-Type" content="text/css" />
+
+	<style type="text/css" media="screen">
+		body {
+			color: #000;
+			margin: 5em;
+			padding: 0em;
+			font-size: .75em;
+			font-family: verdana, arial, helvetica, sans-serif;
+			text-align:left;
+			}
+		input, textarea {
+			border:1px solid #333;
+		}
+		input:focus, textarea:focus {
+			border:1px solid #036;
+			background-color:#ff9;
+		}
+	</style>
+</head>
+
+<body>
+
+
+
+<!-- action should be replaced without looking for "[frmAction]" but looking for the "form name" or something. -->
+<form action="[frmAction]" enctype="multipart/form-data" method="post" name="myform">
+<div style="width:400px; border:1px #333 solid; padding:30px;">
+<!-- this should be replaced with like <div id="fpcMsg"></div> -->
+[errorMsg]
+<br />
+
+Text Field 1 (required, must match Text Field 2) :<br />
+<input name="text1" type="text" size="40" value="" style="vertical-align:middle;" />(<span style="color:#c00;">*</span>)<br />
+<br />
+Text Field 2 (required, must match Text Field 1) :<br />
+<input name="text2" type="text" size="40" value="this text is not required" /><br />
+<br />
+
+
+<input name="token" type="hidden" value="[token]" />
+<input name="submit" type="submit" value="submit" />
+</div>
+</form>
+
+</body>
+</html>
