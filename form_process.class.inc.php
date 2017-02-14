@@ -27,8 +27,11 @@
 #      configuration to show the specialized text in error block, pull #
 #      construct out and have a process fuction instead, testing token #
 #      and useragent which should be done outside of this...           #
+#   20170214 Cleaned up error messages for parsing html entities       #
+#      added the entity to output so it's easier to find               #
+#      typo's in HTML code                                             #
 #                                                                      #
-# Version : 2013100200                                                 #
+# Version : 2017021400                                                 #
 #                                                                      #
 # Copyright :                                                          #
 #   Copyright (C) 2005,2006,2007,2008,2009,2010,2011,2012,2013         #
@@ -416,7 +419,7 @@ class form_process
 			$intStartPosition = $intEnd;
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 66';
+				echo 'Error Parsing INPUT strange start('.$intStart.') and end ('.$intEnd.')location killing program'."<br />\n";
 				exit;
 			}
 			// collect form.
@@ -431,7 +434,8 @@ class form_process
 			$intLength = $intEnd - $intStart - 6; // different + 1 for length
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 87';
+				echo 'Error Parsing INPUT TYPE strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 87';
 				exit;
 			}
 			// collect form.
@@ -445,7 +449,8 @@ class form_process
 			$intLength = $intEnd - $intStart - 6;
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 100';
+				echo 'Error Parsing INPUT NAME strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 100';
 				exit;
 			}
 			// collect form.
@@ -459,7 +464,8 @@ class form_process
 			$intLength = $intEnd - $intStart - 7; // different + 1 for length
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 113';
+				echo 'Error Parsing INPUT VALUE strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 113';
 				exit;
 			}
 			// collect form.
@@ -502,7 +508,8 @@ class form_process
 			$intStartPosition = $intEnd; //should add +10?
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 66';
+				echo 'Error Parsing TEXTAREA strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 66';
 				exit;
 			}
 			// collect form.
@@ -523,7 +530,8 @@ class form_process
 			$intLength = $intEnd - $intStart - 6; // different + 1 for length
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 87';
+				echo 'Error Parsing TEXTAREA TYPE strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 87';
 				exit;
 			}
 			// collect form.
@@ -537,7 +545,8 @@ class form_process
 			$intLength = $intEnd - $intStart - 6; // different + 1 for length
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 100';
+				echo 'Error Parsing TEXTAREA NAME strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 100';
 				exit;
 			}
 			// collect form.
@@ -551,7 +560,8 @@ class form_process
 			$intLength = $intEnd - $intStart;
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 113';
+				echo 'Error Parsing TEXTAREA ELEMENTCLOSE strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 113';
 				exit;
 			}
 			// collect form.
@@ -596,7 +606,8 @@ class form_process
 			$intStartPosition = $intEnd;
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 465';
+				echo 'Error Parsing SELECT strange start('.$intStart.') and end ('.$intEnd.')location killing program'."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 465';
 				exit;
 			}
 			// collect form.
@@ -610,7 +621,8 @@ class form_process
 			$intLength = $intEnd - $intStart - 6; // different + 1 for length
 			if ($intLength < 0)
 			{
-				echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 100';
+				echo 'Error Parsing SELECT NAME strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+				//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 100';
 				exit;
 			}
 			// collect form.
@@ -638,7 +650,8 @@ class form_process
 				$intStartPosition2 = $intEnd;
 				if ($intLength < 0)
 				{
-					echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 66';
+				echo 'Error Parsing SELECT OPTION strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+					//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 66';
 					exit;
 				}
 				$strOption = substr($strFrmInput, $intStart, $intLength);
@@ -651,7 +664,8 @@ class form_process
 				$intLength = $intEnd - $intStart;
 				if ($intLength < 0)
 				{
-					echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 113';
+					echo 'Error Parsing SELECT OPTION START strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+					//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 113';
 					exit;
 				}
 				$strName = substr ($strOption,$intStart+1,$intLength-1);
@@ -665,7 +679,8 @@ class form_process
 				$intLength = $intEnd - $intStart - 7; // different + 1 for length
 				if ($intLength < 0)
 				{
-					echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 113';
+					echo 'Error Parsing SELECT OPTION VALUE strange start('.$intStart.') and end ('.$intEnd.')location killing program<br />'.htmlentities($strFrmInput, ENT_QUOTES)."<br />\n";;
+					//echo 'strange start('.$intStart.') and end ('.$intEnd.')location killing program : line 113';
 					exit;
 				}
 				// collect form.
